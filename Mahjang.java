@@ -107,7 +107,7 @@ public class Mahjang {
                 NumberHai numberHai = (NumberHai) hai;// キャスト用のインスタンスnumberHaiを作成
                 // NumberHaiクラスのHaiの情報を表示
                 System.out.println("NumberHai: ID=" + numberHai.getId() + ", Number=" + numberHai.getNumber()
-                        + ", Suit=" + numberHai.getType() + ", IsRed=" + numberHai.getRed() + ", Weight="
+                        + ", Suit=" + numberHai.getSuit() + ", IsRed=" + numberHai.getRed() + ", Weight="
                         + numberHai.getWeight());
             } else if (hai instanceof HonourHai) {// haiの型がHonourHaiの場合
                 HonourHai honourHai = (HonourHai) hai;// キャスト用のインスタンスhonourHaiを作成
@@ -125,7 +125,7 @@ public class Mahjang {
                     NumberHai numberHai = (NumberHai) hai;// キャスト用のインスタンスnumberHaiを作成
                     // NumberHaiクラスのHaiの情報を表示
                     System.out.println("NumberHai: ID=" + numberHai.getId() + ", Number=" + numberHai.getNumber()
-                            + ", Suit=" + numberHai.getType() + ", IsRed=" + numberHai.getRed() + ", Weight="
+                            + ", Suit=" + numberHai.getSuit() + ", IsRed=" + numberHai.getRed() + ", Weight="
                             + numberHai.getWeight());
                 } else if (hai instanceof HonourHai) {// haiの型がHonourHaiの場合
                     HonourHai honourHai = (HonourHai) hai;// キャスト用のインスタンスhonourHaiを作成
@@ -181,13 +181,13 @@ class Hai implements Comparable<Hai> {// 牌全体のスーパークラスの定
 
 class NumberHai extends Hai {// 数牌クラスの定義
     private int number;// 数字
-    private String type;// スート
+    private String suit;// スート
     private boolean isRed;// 赤ドラかどうか
 
-    NumberHai(int id, boolean isDora, int number, String type, boolean isRed) {
+    NumberHai(int id, boolean isDora, int number, String suit, boolean isRed) {
         super(id, isDora);
         this.number = number;
-        this.type = type;
+        this.suit = suit;
         this.isRed = isRed;
         // weightをsetWeightで初期化
         super.setWeight(this.setWeight());
@@ -197,16 +197,16 @@ class NumberHai extends Hai {// 数牌クラスの定義
         return this.number;
     }
 
-    String getType() {// スートを取得
-        return this.type;
+    String getSuit() {// スートを取得
+        return this.suit;
     }
 
     boolean getRed() {// 赤ドラかどうかを取得
         return this.isRed;
     }
 
-    int typeInt() {// スートを整数に変換するメソッド
-        switch (this.type) {
+    int suitInt() {// スートを整数に変換するメソッド
+        switch (this.suit) {
             case "Man":
                 return 1;
             case "Pin":
@@ -220,7 +220,7 @@ class NumberHai extends Hai {// 数牌クラスの定義
 
     int setWeight() {// 重みをセットするメソッド
         int weight = 0;
-        weight += typeInt() * 100 + this.number * 10;
+        weight += suitInt() * 100 + this.number * 10;
         if (this.isRed) {
             weight += 2;
         } else if (this.getDora()) {
@@ -276,12 +276,12 @@ class HonourHai extends Hai {// 字牌クラスの定義
 }
 
 class Yaku {// 役クラスの定義（未完成）
-    private int yakuId;
-    private String yakuName;
-    private Hai[] haiList;
-    private Hai[][] haiGroupList;
+    private int yakuId;// 役のID（未使用）
+    private String yakuName;// 役の名前
+    private Hai[] haiList;// 役に含まれる牌のリスト
+    private Hai[][] haiGroupList;// 役に含まれる牌のグループリスト
 
-    Yaku(Hai[] haiList, Hai[][] haiGroupList) {
+    Yaku(int yakuId, String yakuName, Hai[] haiList, Hai[][] haiGroupList) {
         this.haiList = haiList;
         this.haiGroupList = haiGroupList;
     }
@@ -319,6 +319,20 @@ class Hand {// 手牌をソートするところから役の判別の手前ま�
         return this.handSort;
     }
 
+    boolean isSameHai(Hai hai1, Hai hai2) {
+        if (hai1 instanceof NumberHai && hai2 instanceof NumberHai) {// 数牌の場合
+            NumberHai numberHai1 = (NumberHai) hai1;// キャスト用のインスタンスnumberHaiを作成
+            NumberHai numberHai2 = (NumberHai) hai2;// キャスト用のインスタンスnumberHaiを作成
+            return numberHai1.getNumber() == numberHai2.getNumber()
+                    && numberHai1.getSuit().equals(numberHai2.getSuit());
+        } else if (hai1 instanceof HonourHai && hai2 instanceof HonourHai) {// 字牌の場合
+            HonourHai honourHai1 = (HonourHai) hai1;// キャスト用のインスタンスhonourHaiを作成
+            HonourHai honourHai2 = (HonourHai) hai2;// キャスト用のインスタンスhonourhaiを作成
+            return honourHai1.getType().equals(honourHai2.getType());
+        }
+        return false;
+    }
+
     Hai[][] splitHand() {// 手牌を近接グループに分けるメソッド
         int temp = 0;// 重さ保存用変数
         int groupCount = 0;// 近接グループの数
@@ -344,4 +358,143 @@ class Hand {// 手牌をソートするところから役の判別の手前ま�
         return handNeargroup;// 近接グループを返す
     }
 
+    boolean isStandard(Hai[][] group) {// 4面子1雀頭の標準形かを判定するメソッド
+        int countNotJanto = 0;// 雀頭を含まないブロックの数
+        int countJanto = 0;// 雀頭を含むブロックの数
+        for (Hai[] g : group) {
+            int len = g.length;
+            if (len % 3 == 0) {// 3の倍数なら雀頭を含まないブロック
+                countNotJanto++;
+            } else if (len % 3 == 2) {// 3の倍数+2なら雀頭を含むブロック
+                countJanto++;
+            } else {
+                return false;// それ以外は不正なブロック
+            }
+        }
+        if (countNotJanto >= 1 && countJanto == 1) {
+
+            return true;// 正常なブロック
+        } else {// 雀頭を含むブロックが2つ以上ある場合
+            return false;// 不正なブロック
+        }
+    }
+
+    Hai[][][] splitBlocks(Hai[] group, boolean includeJanto) {// グループを面子の解釈配列に分けるメソッド
+        int[] amount = new int[group.length];// 手牌の牌ごとの数を保存する配列
+        Hai beforeHai = null;// 前の牌を保存する変数
+
+        int i = 0;// ループ用変数
+        for (Hai e : group) {// 手牌の数だけループ
+            if (i == 0 || !(isSameHai(e, beforeHai))) {// 最初の数か違う牌なら
+                beforeHai = e;// 前の牌を保存
+                amount[i++] = 1;// 新たに牌を増やす
+            } else {// 同じ牌なら
+                amount[i] = amount[i] + 1;// すでにある牌の数を増やす
+            }
+        }
+
+        return null;// まだ実装できず
+    }
+
+    // Mentsu[][]
+
+    /*
+     * makeMentsu(Hai[][] groups) {// 標準形であることを前提に面子の解釈配列を返す
+     * Mentsu[][] mentsuList = new Mentsu[5][];// 面子の数はグループ数-1
+     * for (Hai[] g : groups) {// グループの数だけループ
+     * int len = g.length;
+     * if (len % 3 == 0) {// 3の倍数なら雀頭を含まないブロック
+     * 
+     * } else if (len % 3 == 2) {// 3の倍数+2なら雀頭を含むブロック
+     * 
+     * }
+     * }
+     * }
+     */
+
+}
+
+class Mentsu {
+    private int type;// メンツの種類 1:Shuntsu, 2:Koutsu, 3:Toitsu
+    private int suit;// メンツのスート 1:Man, 2:Pin, 3:Sou, 4:Honour
+    private boolean isOpen;// 面子が公開かどうか（明か暗か）
+    private Hai[] haiList;// メンツに含まれる牌のリスト
+
+    Mentsu(int type, boolean isOpen, Hai[] haiList) {// メンツのコンストラクタ
+        this.type = type;
+        this.isOpen = isOpen;
+        this.haiList = haiList;
+        if (haiList[0] instanceof HonourHai) {
+            this.suit = 4;// スートを4に設定
+        } else {
+            NumberHai numberHai = (NumberHai) haiList[0];// キャスト用のインスタンスnumberHaiを作成
+            this.suit = numberHai.suitInt();// スートを取得
+        }
+    }
+
+    int getType() {// メンツの種類を取得するメソッド
+        return this.type;
+    }
+
+    int getSuit() {// メンツのスートを取得するメソッド
+        return this.suit;
+    }
+
+    boolean getOpen() {// メンツが公開かどうかを取得するメソッド
+        return this.isOpen;
+    }
+
+    Hai[] getHaiList() {// メンツに含まれる牌のリストを取得するメソッド
+        return this.haiList;
+    }
+
+    boolean existYaochu() {// この面子に公九牌が含まれているかを判定するメソッド
+        for (Hai hai : haiList) {// 面子の牌を一つずつ確認
+            if (hai instanceof NumberHai) {// 数牌の場合
+                NumberHai numberHai = (NumberHai) hai;// キャスト用のインスタンスnumberHaiを作成
+                if (numberHai.getNumber() == 1 || numberHai.getNumber() == 9) {// 1か9ならtrue
+                    return true;
+                }
+            } else if (hai instanceof HonourHai) {// 字牌の場合
+                HonourHai honourHai = (HonourHai) hai;// キャスト用のインスタンスhonourHaiを作成
+                if (honourHai.getType().equals("East") || honourHai.getType().equals("South")
+                        || honourHai.getType().equals("West") || honourHai.getType().equals("North")) {
+                    return true;
+                }
+            }
+        }
+        return false;// 公九牌が含まれていない場合はfalseを返す
+    }
+
+    boolean existChunchan() {// この面子に中張牌が含まれているかを判定するメソッド
+        // 基本的には、公九牌のみかどうかの判定に用いる（裏の条件）
+        for (Hai hai : haiList) {// 面子の牌を一つずつ確認
+            if (hai instanceof NumberHai) {// 数牌の場合
+                NumberHai numberHai = (NumberHai) hai;// キャスト用のインスタンスnumberHaiを作成
+                if (numberHai.getNumber() >= 2 && numberHai.getNumber() <= 8) {// 2-8ならtrue
+                    return true;
+                }
+            }
+        }
+        return false;// 中張牌が含まれていない場合はfalseを返す
+    }
+
+    boolean existSpecificHai(Hai hai) {// この面子に特定の牌が含まれているかを判定するメソッド
+        for (Hai mentsuHai : haiList) {// 面子の牌を一つずつ確認
+            if (hai instanceof NumberHai && mentsuHai instanceof NumberHai) {
+                NumberHai h1 = (NumberHai) hai;
+                NumberHai h2 = (NumberHai) mentsuHai;
+                if (h1.getNumber() == h2.getNumber() && h1.getSuit().equals(h2.getSuit())) {
+                    return true;
+                }
+            } else if (hai instanceof HonourHai && mentsuHai instanceof HonourHai) {
+                HonourHai h1 = (HonourHai) hai;
+                HonourHai h2 = (HonourHai) mentsuHai;
+                if (h1.getType().equals(h2.getType())) {
+                    return true;
+                }
+            }
+        }
+        return false;// 特定の牌が含まれていない場合はfalseを返す
+    }
 }
