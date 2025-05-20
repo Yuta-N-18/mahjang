@@ -1,4 +1,4 @@
-class HonourHai extends Hai {// 字牌クラスの定義
+public class HonourHai extends Hai {// 字牌クラスの定義
     private String type;// 字牌の種類
 
     HonourHai(int id, boolean isDora, String type) {
