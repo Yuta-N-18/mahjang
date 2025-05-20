@@ -11,8 +11,7 @@ public class Mentsu {
         if (haiList[0] instanceof HonourHai) {
             this.suit = 4;// スートを4に設定
         } else {
-            NumberHai numberHai = (NumberHai) haiList[0];// キャスト用のインスタンスnumberHaiを作成
-            this.suit = numberHai.suitInt();// スートを取得
+            this.suit = ((NumberHai) haiList[0]).getSuit();// 数牌の場合、スートを取得
         }
     }
 
@@ -39,12 +38,8 @@ public class Mentsu {
                 if (numberHai.getNumber() == 1 || numberHai.getNumber() == 9) {// 1か9ならtrue
                     return true;
                 }
-            } else if (hai instanceof HonourHai) {// 字牌の場合
-                HonourHai honourHai = (HonourHai) hai;// キャスト用のインスタンスhonourHaiを作成
-                if (honourHai.getType().equals("East") || honourHai.getType().equals("South")
-                        || honourHai.getType().equals("West") || honourHai.getType().equals("North")) {
-                    return true;
-                }
+            } else if (hai instanceof HonourHai) {
+                return true; // 字牌の場合はtrue
             }
         }
         return false;// 公九牌が含まれていない場合はfalseを返す
@@ -68,13 +63,13 @@ public class Mentsu {
             if (hai instanceof NumberHai && mentsuHai instanceof NumberHai) {
                 NumberHai h1 = (NumberHai) hai;
                 NumberHai h2 = (NumberHai) mentsuHai;
-                if (h1.getNumber() == h2.getNumber() && h1.getSuit().equals(h2.getSuit())) {
+                if (h1.getNumber() == h2.getNumber() && h1.getSuit() == h2.getSuit()) {
                     return true;
                 }
             } else if (hai instanceof HonourHai && mentsuHai instanceof HonourHai) {
                 HonourHai h1 = (HonourHai) hai;
                 HonourHai h2 = (HonourHai) mentsuHai;
-                if (h1.getType().equals(h2.getType())) {
+                if (h1.getType() == h2.getType()) {
                     return true;
                 }
             }
